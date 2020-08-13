@@ -1,5 +1,7 @@
 # TL;DR
 
+This is fork from chenyuntc/cmr , i am not the owner
+
 This repo migrate the following work to Python3 and latest PyTorch [v1.3]:
 
 1. [Learning Category-Specific Mesh Reconstruction from Image Collections (ECCV 2018)](https://github.com/akanazawa/cmr)
