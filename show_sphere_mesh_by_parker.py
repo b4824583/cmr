@@ -6,10 +6,9 @@ import plotly.graph_objects as go
 import numpy as np
 
 # Download data set from plotly repo
-pts = np.loadtxt(np.DataSource().open('https://raw.githubusercontent.com/plotly/datasets/master/mesh_dataset.txt'))
-x, y, z = pts.T
-print(type(x))
-#fig = go.Figure(data=[go.Mesh3d(x=x, y=y, z=z, color='lightpink', opacity=0.50)])
+#pts = np.loadtxt(np.DataSource().open('https://raw.githubusercontent.com/plotly/datasets/master/mesh_dataset.txt'))
+#x, y, z = pts.T
+#print(type(x))
 
 
 #exit()
@@ -24,8 +23,12 @@ mesh_z=np.empty(len(verts))
 tri_i=np.empty(len(faces))
 tri_j=np.empty(len(faces))
 tri_k=np.empty(len(faces))
-print("verts:",verts[0])
-print(faces)
+#print("verts:",verts[0])
+print("verts len:",len(verts))
+#print("verts len[0]:",len(verts[0]))
+print("faces len:",len(faces))
+#print("faces len[0]:",len(faces[0]))
+
 for i in range(len(faces)):
 	for j in range(3):
 		if(j==0):
