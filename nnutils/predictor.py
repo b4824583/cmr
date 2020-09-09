@@ -62,13 +62,17 @@ class MeshPredictor(object):
                 device=opts.gpu_id)
             self.sfm_face = Variable(sfm_face, requires_grad=False)
             faces = self.sfm_face.view(1, -1, 3)
+            print("with sfm ms",faces)
         else:
             # For visualization
             faces = self.model.faces.view(1, -1, 3)
+            print("no sfm ms",faces)
         self.faces = faces.repeat(opts.batch_size, 1, 1)
         self.vis_rend = bird_vis.VisRenderer(opts.img_size,
                                              faces.data.cpu().numpy())
         self.vis_rend.set_bgcolor([1., 1., 1.])
+#       print("vis_rend",self.vis_rend)
+#        exit()
 
         self.resnet_transform = torchvision.transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])

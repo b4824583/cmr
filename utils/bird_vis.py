@@ -10,7 +10,7 @@ import torch
 from torch.autograd import Variable
 import numpy as np
 import cv2
-
+import plotly.graph_objects as go
 from nnutils.nmr import NeuralRenderer
 from utils import transformations
 
@@ -27,6 +27,7 @@ class VisRenderer(object):
             torch.IntTensor(faces).cuda(), requires_grad=False)
         if self.faces.dim() == 2:
             self.faces = torch.unsqueeze(self.faces, 0)
+        print("faces len:",len(self.faces[0]))
         default_tex = np.ones((1, self.faces.shape[1], t_size, t_size, t_size,
                                3))
         blue = np.array([156, 199, 234.]) / 255.
@@ -69,7 +70,36 @@ class VisRenderer(object):
 
         if verts.dim() == 2:
             verts = torch.unsqueeze(verts, 0)
+        mesh_x = np.empty(len(verts[0]))
+        mesh_y = np.empty(len(verts[0]))
+        mesh_z = np.empty(len(verts[0]))
+        for i in range(len(verts[0])):
+            for j in range(3):
+                if (j == 0):
+                    mesh_x[i] = verts[0][i][j]
+                elif (j == 1):
+                    mesh_y[i] = verts[0][i][j]
+                else:
+                    mesh_z[i] = verts[0][i][j]
+        tri_i = np.empty(len(self.faces[0]))
+        tri_j = np.empty(len(self.faces[0]))
+        tri_k = np.empty(len(self.faces[0]))
 
+        for i in range(len(self.faces[0])):
+                for j in range(3):
+                    if(j==0):
+                        tri_i[i]=self.faces[0][i][j]
+                    elif(j==1):
+                        tri_j[i]=self.faces[0][i][j]
+                    else:
+                        tri_k[i]=self.faces[0][i][j]
+        fig = go.Figure(
+            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
+        fig.show()
+        # ----------------------face-----------------
+
+
+        exit()
         verts = asVariable(verts)
         cams = asVariable(cams)
         texture = asVariable(texture)
