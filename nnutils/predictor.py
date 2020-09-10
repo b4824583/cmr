@@ -36,6 +36,7 @@ class MeshPredictor(object):
 
         img_size = (opts.img_size, opts.img_size)
         print('Setting up model..')
+        #-----------------目前猜測是在這一行的什後從mean mesh變成learned mesh的
         self.model = mesh_net.MeshNet(img_size, opts, nz_feat=opts.nz_feat)
 
         self.load_network(self.model, 'pred', self.opts.num_train_epoch)
@@ -48,7 +49,7 @@ class MeshPredictor(object):
             self.tex_renderer = NeuralRenderer(opts.img_size)
             # Only use ambient light for tex renderer
             self.tex_renderer.ambient_light_only()
-
+#--------------------------------這邊將initial mean shape拿進去訓練得到 訓練過後的learned mean shape
         if opts.use_sfm_ms:
             anno_sfm_path = osp.join(opts.cub_cache_dir, 'sfm', 'anno_testval.mat')
             anno_sfm = sio.loadmat(
@@ -62,11 +63,11 @@ class MeshPredictor(object):
                 device=opts.gpu_id)
             self.sfm_face = Variable(sfm_face, requires_grad=False)
             faces = self.sfm_face.view(1, -1, 3)
-            print("with sfm ms",faces)
+#-------------------------------------------
         else:
             # For visualization
             faces = self.model.faces.view(1, -1, 3)
-            print("no sfm ms",faces)
+            print("no sfm ms test")
         self.faces = faces.repeat(opts.batch_size, 1, 1)
         self.vis_rend = bird_vis.VisRenderer(opts.img_size,
                                              faces.data.cpu().numpy())

@@ -27,7 +27,6 @@ class VisRenderer(object):
             torch.IntTensor(faces).cuda(), requires_grad=False)
         if self.faces.dim() == 2:
             self.faces = torch.unsqueeze(self.faces, 0)
-        print("faces len:",len(self.faces[0]))
         default_tex = np.ones((1, self.faces.shape[1], t_size, t_size, t_size,
                                3))
         blue = np.array([156, 199, 234.]) / 255.
@@ -57,6 +56,7 @@ class VisRenderer(object):
         cams is 7, cuda torch Variable
         Returns N x N x 3 numpy
         """
+        print("visrender call")
         if texture is None:
             texture = self.default_tex
         elif texture.dim() == 5:
@@ -70,9 +70,13 @@ class VisRenderer(object):
 
         if verts.dim() == 2:
             verts = torch.unsqueeze(verts, 0)
+
+#------------------------------ edited by parker
+#------------------------------this is edited bird mesh----
         mesh_x = np.empty(len(verts[0]))
         mesh_y = np.empty(len(verts[0]))
         mesh_z = np.empty(len(verts[0]))
+        print("bird_vis verts:",verts[0])
         for i in range(len(verts[0])):
             for j in range(3):
                 if (j == 0):
@@ -94,12 +98,12 @@ class VisRenderer(object):
                     else:
                         tri_k[i]=self.faces[0][i][j]
         fig = go.Figure(
-            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
+            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightblue', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
         fig.show()
-        # ----------------------face-----------------
-
-
         exit()
+        # ----------------------edited by parker-----------------
+
+
         verts = asVariable(verts)
         cams = asVariable(cams)
         texture = asVariable(texture)

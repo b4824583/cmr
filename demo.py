@@ -99,8 +99,9 @@ def visualize(img, outputs, renderer):
 
 
 def main(_):
-
     img = preprocess_image(opts.img_path, img_size=opts.img_size)
+    print("opts:",opts.gpu_id)
+#    exit()
 
     batch = {'img': torch.Tensor(np.expand_dims(img, 0))}
 
@@ -116,4 +117,7 @@ def main(_):
 
 if __name__ == '__main__':
     opts.batch_size = 1
+    opts.name="bird_net"
+    opts.num_train_epoch=500
+    opts.img_path="misc/demo_data/img1.jpg"
     app.run(main)

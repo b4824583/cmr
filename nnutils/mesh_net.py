@@ -19,6 +19,7 @@ from utils import mesh
 from utils import geometry as geom_utils
 from . import net_blocks as nb
 
+import plotly.graph_objects as go
 #-------------- flags -------------#
 #----------------------------------#
 flags.DEFINE_boolean('symmetric', True, 'Use symmetric mesh or not')
@@ -232,6 +233,39 @@ class MeshNet(nn.Module):
         verts, faces = mesh.create_sphere(opts.subdivide)
         num_verts = verts.shape[0]
 
+        # ------------------------------ edited by parker
+        # ------------------------------this is edited bird mesh----
+        mesh_x = np.empty(len(verts))
+        mesh_y = np.empty(len(verts))
+        mesh_z = np.empty(len(verts))
+        for i in range(len(verts)):
+            for j in range(3):
+                if (j == 0):
+                    mesh_x[i] = verts[i][j]
+                elif (j == 1):
+                    mesh_y[i] = verts[i][j]
+                else:
+                    mesh_z[i] = verts[i][j]
+        tri_i = np.empty(len(faces))
+        tri_j = np.empty(len(faces))
+        tri_k = np.empty(len(faces))
+
+        for i in range(len(faces)):
+            for j in range(3):
+                if (j == 0):
+                    tri_i[i] = faces[i][j]
+                elif (j == 1):
+                    tri_j[i] = faces[i][j]
+                else:
+                    tri_k[i] = faces[i][j]
+        print(tri_i)
+        fig = go.Figure(
+            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
+        fig.show()
+        #--------------it is sphere mesh
+#        exit()
+        # ----------------------edited by parker-----------------
+
         if self.symmetric:
             verts, faces, num_indept, num_sym, num_indept_faces, num_sym_faces = mesh.make_symmetric(verts, faces)
             if sfm_mean_shape is not None:
@@ -258,7 +292,9 @@ class MeshNet(nn.Module):
                 verts = geom_utils.project_verts_on_mesh(verts, sfm_mean_shape[0], sfm_mean_shape[1])            
             self.mean_v = nn.Parameter(torch.Tensor(verts))
             self.num_output = num_verts
-
+#---------------------------edited by parker
+        print("mesh_net verts:",verts)
+#--------------------------------
         verts_np = verts
         faces_np = faces
         self.faces = Variable(torch.LongTensor(faces).cuda(), requires_grad=False)
