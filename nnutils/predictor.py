@@ -22,6 +22,7 @@ from nnutils import geom_utils
 from nnutils.nmr import NeuralRenderer
 from utils import bird_vis
 
+
 # These options are off by default, but used for some ablations reported.
 flags.DEFINE_boolean('ignore_pred_delta_v', False, 'Use only mean shape for prediction')
 flags.DEFINE_boolean('use_sfm_ms', False, 'Uses sfm mean shape for prediction')
@@ -38,9 +39,11 @@ class MeshPredictor(object):
         print('Setting up model..')
         #-----------------目前猜測是在這一行的什後從mean mesh變成learned mesh的
         self.model = mesh_net.MeshNet(img_size, opts, nz_feat=opts.nz_feat)
-
+        #-----------------------------------經這一個之後就被改變了得到一個337的verts,但原本的verts至少有600個所以它可能是將某些點更動了,
+        # 也可能是它會透過對稱的手法來變成完整的mean shape
         self.load_network(self.model, 'pred', self.opts.num_train_epoch)
         self.model.eval()
+
         self.model = self.model.cuda(device=self.opts.gpu_id)
 
         self.renderer = NeuralRenderer(opts.img_size)

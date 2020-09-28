@@ -19,7 +19,7 @@ from utils import mesh
 from utils import geometry as geom_utils
 from . import net_blocks as nb
 
-import plotly.graph_objects as go
+
 #-------------- flags -------------#
 #----------------------------------#
 flags.DEFINE_boolean('symmetric', True, 'Use symmetric mesh or not')
@@ -258,7 +258,7 @@ class MeshNet(nn.Module):
                     tri_j[i] = faces[i][j]
                 else:
                     tri_k[i] = faces[i][j]
-        print(tri_i)
+        import plotly.graph_objects as go
         fig = go.Figure(
             data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
         fig.show()
@@ -294,6 +294,7 @@ class MeshNet(nn.Module):
             self.num_output = num_verts
 #---------------------------edited by parker
         print("mesh_net verts:",verts)
+        print("mesh_net len:",len(verts))
 #--------------------------------
         verts_np = verts
         faces_np = faces
