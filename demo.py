@@ -54,7 +54,11 @@ def visualize(img, outputs, renderer):
     vert = outputs['verts'][0]
     cam = outputs['cam_pred'][0]
     texture = outputs['texture'][0]
+    # -----------------------這邊會輸出已經預測好的bird mesh
+    # -----------------------------------------這邊會Vis Render call()
     shape_pred = renderer(vert, cam)
+    # -----------------------這邊會輸出已經預測好的bird mesh
+    # -----------------------------------------這邊會Vis Render call()
     img_pred = renderer(vert, cam, texture=texture)
 
     # Different viewpoints.
@@ -106,12 +110,16 @@ def main(_):
     batch = {'img': torch.Tensor(np.expand_dims(img, 0))}
 
     predictor = pred_util.MeshPredictor(opts)
+    #-----------------得到預測好的vertice
     outputs = predictor.predict(batch)
+    #-----------------------------draw predited mesh
+
+    #----------------------------------
 
     # This is resolution
     renderer = predictor.vis_rend
     renderer.set_light_dir([0, 1, -1], 0.4)
-
+    # output["verts"]是已經預測好的vertce
     visualize(img, outputs, predictor.vis_rend)
 
 

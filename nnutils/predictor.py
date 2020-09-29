@@ -21,6 +21,7 @@ from nnutils import mesh_net
 from nnutils import geom_utils
 from nnutils.nmr import NeuralRenderer
 from utils import bird_vis
+import plotly.graph_objects as go
 
 
 # These options are off by default, but used for some ablations reported.
@@ -53,6 +54,7 @@ class MeshPredictor(object):
             # Only use ambient light for tex renderer
             self.tex_renderer.ambient_light_only()
 #--------------------------------這邊將initial mean shape拿進去訓練得到 訓練過後的learned mean shape
+        #----------------是否使用use_sfm_ms(它門預設都沒有，這個mesh非常的簡陋，它必須經過學習才會得到一個mean shape
         if opts.use_sfm_ms:
             anno_sfm_path = osp.join(opts.cub_cache_dir, 'sfm', 'anno_testval.mat')
             anno_sfm = sio.loadmat(
@@ -70,17 +72,14 @@ class MeshPredictor(object):
         else:
             # For visualization
             faces = self.model.faces.view(1, -1, 3)
-            print("no sfm ms test")
+
         self.faces = faces.repeat(opts.batch_size, 1, 1)
+        #--------------------------------------這邊會到vis render init()
         self.vis_rend = bird_vis.VisRenderer(opts.img_size,
                                              faces.data.cpu().numpy())
         self.vis_rend.set_bgcolor([1., 1., 1.])
-#       print("vis_rend",self.vis_rend)
-#        exit()
-
         self.resnet_transform = torchvision.transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
     def load_network(self, network, network_label, epoch_label):
         save_filename = '{}_net_{}.pth'.format(network_label, epoch_label)
         network_dir = os.path.join(self.opts.checkpoint_dir, self.opts.name)
@@ -134,7 +133,40 @@ class MeshPredictor(object):
         del_v = self.model.symmetrize(self.delta_v)
         # Deform mean shape:
         self.mean_shape = self.model.get_mean_shape()
+#-------------------------edited by parker
+#----------------------------這確實是mean shape----------------
 
+        mesh_x = np.empty(len(self.mean_shape))
+        mesh_y = np.empty(len(self.mean_shape))
+        mesh_z = np.empty(len(self.mean_shape))
+        print("bird_vis verts:", self.mean_shape)
+        for i in range(len(self.mean_shape)):
+            for j in range(3):
+                if (j == 0):
+                    mesh_x[i] = self.mean_shape[i][j]
+                elif (j == 1):
+                    mesh_y[i] = self.mean_shape[i][j]
+                else:
+                    mesh_z[i] = self.mean_shape[i][j]
+#        print(len(self.faces))
+#        exit()
+        tri_i = np.empty(len(self.faces[0]))
+        tri_j = np.empty(len(self.faces[0]))
+        tri_k = np.empty(len(self.faces[0]))
+
+        for i in range(len(self.faces[0])):
+            for j in range(3):
+                if (j == 0):
+                    tri_i[i] = self.faces[0][i][j]
+                elif (j == 1):
+                    tri_j[i] = self.faces[0][i][j]
+                else:
+                    tri_k[i] = self.faces[0][i][j]
+        fig = go.Figure(
+            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightgreen', opacity=0.5,i=tri_i, j=tri_j, k=tri_k)])
+        fig.show()
+#---------------------------------------------------------
+#        exit()
         if self.opts.use_sfm_ms:
             self.pred_v = self.sfm_mean_shape
         elif self.opts.ignore_pred_delta_v:

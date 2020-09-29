@@ -234,7 +234,7 @@ class MeshNet(nn.Module):
         num_verts = verts.shape[0]
 
         # ------------------------------ edited by parker
-        # ------------------------------this is edited bird mesh----
+        # ------------------------------this is sphere mean shape----
         mesh_x = np.empty(len(verts))
         mesh_y = np.empty(len(verts))
         mesh_z = np.empty(len(verts))
