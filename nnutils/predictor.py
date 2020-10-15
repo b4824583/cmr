@@ -22,7 +22,7 @@ from nnutils import geom_utils
 from nnutils.nmr import NeuralRenderer
 from utils import bird_vis
 import plotly.graph_objects as go
-
+import math
 
 # These options are off by default, but used for some ablations reported.
 flags.DEFINE_boolean('ignore_pred_delta_v', False, 'Use only mean shape for prediction')
@@ -135,12 +135,27 @@ class MeshPredictor(object):
         self.mean_shape = self.model.get_mean_shape()
 #-------------------------edited by parker
 #----------------------------這確實是mean shape----------------
-
+        f=open("bird_mean_mesh.off","w")
+        f_check=open("check_bird_mean_mesh","w")
+        f.write("OFF\n")
+        line=str(len(self.mean_shape))+" "+str(len(self.faces[0]))+" 0\n"
+        f.write(line)
         mesh_x = np.empty(len(self.mean_shape))
         mesh_y = np.empty(len(self.mean_shape))
         mesh_z = np.empty(len(self.mean_shape))
         print("bird_vis verts:", self.mean_shape)
         for i in range(len(self.mean_shape)):
+#            mesh_x_point=format(self.mean_shape[i][0],".7f")
+#            mesh_y_point=format(self.mean_shape[i][1],".7f")
+#            mesh_z_point=format(self.mean_shape[i][2],".7f")
+            mesh_x_point=float(self.mean_shape[i][0])
+            mesh_y_point=float(self.mean_shape[i][1])
+            mesh_z_point=float(self.mean_shape[i][2])
+
+            line=str(mesh_x_point)+" "+str(mesh_y_point)+" "+str(mesh_z_point)+"\n"
+            line_for_check=str(mesh_x_point)+" "+str(mesh_y_point)+" "+str(mesh_z_point)+" "+str(i)+"\n"
+            f_check.write(line_for_check)
+            f.write(line)
             for j in range(3):
                 if (j == 0):
                     mesh_x[i] = self.mean_shape[i][j]
@@ -148,13 +163,45 @@ class MeshPredictor(object):
                     mesh_y[i] = self.mean_shape[i][j]
                 else:
                     mesh_z[i] = self.mean_shape[i][j]
-#        print(len(self.faces))
-#        exit()
+
         tri_i = np.empty(len(self.faces[0]))
         tri_j = np.empty(len(self.faces[0]))
         tri_k = np.empty(len(self.faces[0]))
 
         for i in range(len(self.faces[0])):
+
+            # -------------------------- norm 法向量 and vector with center angle
+            #-------------------------
+            face_point1 = int(self.faces[0][i][0])
+            face_point2 = int(self.faces[0][i][1])
+            face_point3 = int(self.faces[0][i][2])
+            x0,y0,z0=float(self.mean_shape[face_point1][0]),float(self.mean_shape[face_point1][1]),float(self.mean_shape[face_point1][2])
+            x1,y1,z1=float(self.mean_shape[face_point2][0]),float(self.mean_shape[face_point2][1]),float(self.mean_shape[face_point2][2])
+            x2,y2,z2=float(self.mean_shape[face_point3][0]),float(self.mean_shape[face_point3][1]),float(self.mean_shape[face_point3][2])
+            ux,uy,uz=u=[x1-x0,y1-y0,z1-z0]
+            vx,vy,vz=v=[x2-x0,y2-y0,z2-z0]
+            u_cross_v=[uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx]
+#            print(u_cross_v)#求得法向量
+            center__of_gravity=[(x0+x1+x2)/3,(y0+y1+y2)/3,(z0+z1+z2)/3]
+            center_of_gravity_zero_vector=[0-center__of_gravity[0],0-center__of_gravity[1],0-center__of_gravity[2]]
+
+            unit_vector_1=u_cross_v/np.linalg.norm(u_cross_v)
+            unit_vector_2=center_of_gravity_zero_vector/np.linalg.norm(center_of_gravity_zero_vector)
+            dot_product=np.dot(unit_vector_1,unit_vector_2)
+            angle=np.arccos(dot_product)
+#上面依段是拿到法向量之後與員新的向量計算出角度
+#--------------------------------------
+
+#--------------------------如果得到的角度大於90度喔i cancle this thing
+            # if(math.degrees(angle)>=90):
+            line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
+#            else:
+#                line = str(3) + " " + str(face_point2) + " " + str(face_point1) + " " + str(face_point3) + "\n"
+#-------------------------------------------
+            if(i==86-1):
+                print(str(face_point1)+" "+str(face_point2)+" "+str(face_point3))
+                print(math.degrees(angle))
+            f.write(line)
             for j in range(3):
                 if (j == 0):
                     tri_i[i] = self.faces[0][i][j]
@@ -165,6 +212,8 @@ class MeshPredictor(object):
         fig = go.Figure(
             data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightgreen', opacity=0.5,i=tri_i, j=tri_j, k=tri_k)])
         fig.show()
+        f.close()
+        f_check.close()
 #---------------------------------------------------------
 #        exit()
         if self.opts.use_sfm_ms:

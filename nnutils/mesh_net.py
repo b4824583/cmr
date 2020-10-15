@@ -19,7 +19,7 @@ from utils import mesh
 from utils import geometry as geom_utils
 from . import net_blocks as nb
 
-
+import math
 #-------------- flags -------------#
 #----------------------------------#
 flags.DEFINE_boolean('symmetric', True, 'Use symmetric mesh or not')
@@ -235,10 +235,16 @@ class MeshNet(nn.Module):
 
         # ------------------------------ edited by parker
         # ------------------------------this is sphere mean shape----
+        f=open("sphere_mesh.off","w")
+        f.write("OFF\n")
+        line=str(len(verts))+" "+str(len(faces))+" 0\n"
+        f.write(line)
         mesh_x = np.empty(len(verts))
         mesh_y = np.empty(len(verts))
         mesh_z = np.empty(len(verts))
         for i in range(len(verts)):
+            line=str(verts[i][0])+" "+str(verts[i][1])+" "+str(verts[i][2])+"\n"
+            f.write(line)
             for j in range(3):
                 if (j == 0):
                     mesh_x[i] = verts[i][j]
@@ -251,6 +257,39 @@ class MeshNet(nn.Module):
         tri_k = np.empty(len(faces))
 
         for i in range(len(faces)):
+            face_point1=int(faces[i][0])
+            face_point2=int(faces[i][1])
+            face_point3=int(faces[i][2])
+            x0, y0, z0 = float(verts[face_point1][0]), float(verts[face_point1][1]), float(
+                verts[face_point1][2])
+            x1, y1, z1 = float(verts[face_point2][0]), float(verts[face_point2][1]), float(
+                verts[face_point2][2])
+            x2, y2, z2 = float(verts[face_point3][0]), float(verts[face_point3][1]), float(
+                verts[face_point3][2])
+            ux, uy, uz = u = [x1 - x0, y1 - y0, z1 - z0]
+            vx, vy, vz = v = [x2 - x0, y2 - y0, z2 - z0]
+            u_cross_v = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx]
+            #            print(u_cross_v)#求得法向量
+            center__of_gravity = [(x0 + x1 + x2) / 3, (y0 + y1 + y2) / 3, (z0 + z1 + z2) / 3]
+            center_of_gravity_zero_vector = [0 - center__of_gravity[0], 0 - center__of_gravity[1],
+                                             0 - center__of_gravity[2]]
+
+            unit_vector_1 = u_cross_v / np.linalg.norm(u_cross_v)
+            unit_vector_2 = center_of_gravity_zero_vector / np.linalg.norm(center_of_gravity_zero_vector)
+            dot_product = np.dot(unit_vector_1, unit_vector_2)
+            angle = np.arccos(dot_product)
+
+            if (math.degrees(angle) >= 90):
+                line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
+#                temple=0;
+            else:
+                line = str(3) + " " + str(face_point2) + " " + str(face_point1) + " " + str(face_point3) + "\n"
+                temple=faces[i][0]
+                faces[i][0]=faces[i][1]
+                faces[i][1]=temple
+
+            # -------------------------------------------
+            f.write(line)
             for j in range(3):
                 if (j == 0):
                     tri_i[i] = faces[i][j]
@@ -262,6 +301,7 @@ class MeshNet(nn.Module):
         fig = go.Figure(
             data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
         fig.show()
+        f.close()
         #--------------it is sphere mesh
 #        exit()
         # ----------------------edited by parker-----------------
