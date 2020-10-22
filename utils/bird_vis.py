@@ -73,11 +73,19 @@ class VisRenderer(object):
 
 #------------------------------ edited by parker
 #------------------------------this is edited bird mesh----
+        f = open("edited_bird_mesh.off", "w")
+        f.write("OFF\n")
+        line = str(len(verts[0])) + " " + str(len(self.faces[0])) + " 0\n"
+        f.write(line)
+
+
         mesh_x = np.empty(len(verts[0]))
         mesh_y = np.empty(len(verts[0]))
         mesh_z = np.empty(len(verts[0]))
         print("bird_vis verts:",verts[0])
         for i in range(len(verts[0])):
+            line=str(float(verts[0][i][0]))+" "+str(float(verts[0][i][1]))+" "+str(float(verts[0][i][2]))+"\n"
+            f.write(line)
             for j in range(3):
                 if (j == 0):
                     mesh_x[i] = verts[0][i][j]
@@ -90,7 +98,9 @@ class VisRenderer(object):
         tri_k = np.empty(len(self.faces[0]))
 
         for i in range(len(self.faces[0])):
-                for j in range(3):
+            line = str(3) + " " + str(int(self.faces[0][i][0])) + " " + str(int(self.faces[0][i][1])) + " " + str(int(self.faces[0][i][2])) + "\n"
+            f.write(line)
+            for j in range(3):
                     if(j==0):
                         tri_i[i]=self.faces[0][i][j]
                     elif(j==1):
@@ -100,7 +110,8 @@ class VisRenderer(object):
         fig = go.Figure(
             data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightblue', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
         fig.show()
-        exit()
+        f.close()
+        exit()#end code
         # ----------------------edited by parker-----------------
 
 

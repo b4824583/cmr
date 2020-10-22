@@ -18,8 +18,8 @@ from torch.autograd import Variable
 from utils import mesh
 from utils import geometry as geom_utils
 from . import net_blocks as nb
+#import math
 
-import math
 #-------------- flags -------------#
 #----------------------------------#
 flags.DEFINE_boolean('symmetric', True, 'Use symmetric mesh or not')
@@ -220,6 +220,32 @@ class CodePredictor(nn.Module):
 
 #------------ Mesh Net ------------#
 #----------------------------------#
+
+#----------------------- read off_file
+def read_off(file):
+    if 'OFF' != file.readline().strip():
+        raise('Not a valid OFF header')
+    n_verts, n_faces, n_dontknow = tuple([int(s) for s in file.readline().strip().split(' ')])
+    for i_vert in range(n_verts):
+        if(i_vert==0):
+            str=[float(s) for s in file.readline().strip().split(' ')]
+            verts = np.array([str])
+        else:
+            str = [float(s) for s in file.readline().strip().split(' ')]
+            temp=np.array([str])
+            verts=np.concatenate((verts,temp),axis=0)
+    for i_face in range(n_faces):
+        if(i_face==0):
+            str=[int(s) for s in file.readline().strip().split(' ')]
+            str.pop(0)
+            faces = np.array([str])
+        else:
+            str = [int(s) for s in file.readline().strip().split(' ')]
+            str.pop(0)
+            temp=np.array([str])
+            faces=np.concatenate((faces,temp),axis=0)
+    return verts, faces
+#--------------------
 class MeshNet(nn.Module):
     def __init__(self, input_shape, opts, nz_feat=100, num_kps=15, sfm_mean_shape=None):
         # Input shape is H x W of the image.
@@ -231,9 +257,12 @@ class MeshNet(nn.Module):
 
         # Mean shape.
         verts, faces = mesh.create_sphere(opts.subdivide)
+        print(verts)
+        #---------------------------------------edited by parker
+        f=open("sphere_mesh_use_mesh_lab.off")
+#        verts,faces=read_off(f)
         num_verts = verts.shape[0]
 
-        # ------------------------------ edited by parker
         # ------------------------------this is sphere mean shape----
         f=open("sphere_mesh.off","w")
         f.write("OFF\n")
@@ -277,16 +306,9 @@ class MeshNet(nn.Module):
             unit_vector_1 = u_cross_v / np.linalg.norm(u_cross_v)
             unit_vector_2 = center_of_gravity_zero_vector / np.linalg.norm(center_of_gravity_zero_vector)
             dot_product = np.dot(unit_vector_1, unit_vector_2)
-            angle = np.arccos(dot_product)
 
-            if (math.degrees(angle) >= 90):
-                line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
-#                temple=0;
-            else:
-                line = str(3) + " " + str(face_point2) + " " + str(face_point1) + " " + str(face_point3) + "\n"
-                temple=faces[i][0]
-                faces[i][0]=faces[i][1]
-                faces[i][1]=temple
+            line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
+
 
             # -------------------------------------------
             f.write(line)
@@ -303,7 +325,6 @@ class MeshNet(nn.Module):
         fig.show()
         f.close()
         #--------------it is sphere mesh
-#        exit()
         # ----------------------edited by parker-----------------
 
         if self.symmetric:
@@ -333,7 +354,7 @@ class MeshNet(nn.Module):
             self.mean_v = nn.Parameter(torch.Tensor(verts))
             self.num_output = num_verts
 #---------------------------edited by parker
-        print("mesh_net verts:",verts)
+        # print("mesh_net verts:",verts)
         print("mesh_net len:",len(verts))
 #--------------------------------
         verts_np = verts

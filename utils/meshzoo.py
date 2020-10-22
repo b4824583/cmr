@@ -27,7 +27,7 @@ import numpy
 
 
 # pylint: disable=too-many-locals, too-many-statements
-def _refine(node_coords, cells_nodes, edge_nodes, cells_edges):
+def _refine(node_coords, cells_nodes, edge_nodes, cells_edges,ref_steps):
     """Canonically refine a mesh by inserting nodes at all edge midpoints
     and make four triangular elements where there was one.
     This is a very crude refinement; don't use for actual applications.
@@ -123,7 +123,13 @@ def _refine(node_coords, cells_nodes, edge_nodes, cells_edges):
 
         # Create new elements.
         # Center cell:
+#        if(new_cell_gid==5):
+
+
         new_cells_nodes[new_cell_gid] = local_edge_midpoint_gids
+
+        # print("face:" + str(new_cell_gid) + "\t" + str(new_cells_nodes[new_cell_gid]))
+
         new_cells_edges[new_cell_gid] = new_edge_opposite_of_local_node
         new_cell_gid += 1
         # The three corner elements:
@@ -143,7 +149,46 @@ def _refine(node_coords, cells_nodes, edge_nodes, cells_edges):
                 ]
             )
             new_cell_gid += 1
-
+    #---------------------------------------------------------edited by parker#-------------------
+    #-------這個程式太奇怪了 我直接放棄這個程式
+        # print(new_cells_nodes[0:4])
+        # test_for_vertex=numpy.array([(node_coords[0]),(node_coords[5]),(node_coords[11]),(node_coords[12]),(node_coords[13]),(node_coords[14]),(0,0,0)])
+        # mesh_x=numpy.empty(len(test_for_vertex))
+        # mesh_y=numpy.empty(len(test_for_vertex))
+        # mesh_z=numpy.empty(len(test_for_vertex))
+        #
+        # for i in range(len(test_for_vertex)):
+        #     for j in range(3):
+        #         if (j == 0):
+        #             mesh_x[i] = test_for_vertex[i][j]
+        #         elif (j == 1):
+        #             mesh_y[i] = test_for_vertex[i][j]
+        #         else:
+        #             mesh_z[i] = test_for_vertex[i][j]
+        # test_for_faces=numpy.array([(3,4,5),(0,4,5),(2,3,5),(1,3,4)])
+        #
+        # tri_i = numpy.empty(len(test_for_faces))
+        # tri_j = numpy.empty(len(test_for_faces))
+        # tri_k = numpy.empty(len(test_for_faces))
+        # for i in range(len(test_for_faces)):
+        #     for j in range(3):
+        #         if(j==0):
+        #             tri_i[i]=test_for_faces[i][j]
+        #         elif(j==1):
+        #             tri_j[i]=test_for_faces[i][j]
+        #         else:
+        #             tri_k[i]=test_for_faces[i][j]
+        # import plotly.graph_objects as go
+        # fig = go.Figure(
+        #     data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5,i=tri_i, j=tri_j, k=tri_k)])
+        # fig.show()
+        # print("vertex 0 :"+str(node_coords[0]))
+        # print("vertex 5 :"+str(node_coords[5]))
+        # print("vertex 11 :"+str(node_coords[11]))
+        # print("vertex 12 :"+str(node_coords[12]))
+        # print("vertex 13 :"+str(node_coords[13]))
+        # print("vertex 14 :"+str(node_coords[14]))
+        # exit()
     return node_coords, new_cells_nodes, new_edges_nodes, new_cells_edges
 
 
@@ -280,8 +325,10 @@ def iso_sphere(ref_steps=4):
     # Refine.
     edge_nodes, cells_edges = create_edges(cells_nodes)
     args = nodes, cells_nodes, edge_nodes, cells_edges
+    #-------------test for parker
     for _ in range(ref_steps):
-        args = _refine(*args)
+        args = _refine(*args,ref_steps)#-----------這個是函式----------
+        #--------------這個函式讓
 
     # push all nodes to the sphere
     nodes = args[0]

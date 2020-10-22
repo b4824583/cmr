@@ -145,9 +145,6 @@ class MeshPredictor(object):
         mesh_z = np.empty(len(self.mean_shape))
         print("bird_vis verts:", self.mean_shape)
         for i in range(len(self.mean_shape)):
-#            mesh_x_point=format(self.mean_shape[i][0],".7f")
-#            mesh_y_point=format(self.mean_shape[i][1],".7f")
-#            mesh_z_point=format(self.mean_shape[i][2],".7f")
             mesh_x_point=float(self.mean_shape[i][0])
             mesh_y_point=float(self.mean_shape[i][1])
             mesh_z_point=float(self.mean_shape[i][2])
@@ -195,12 +192,10 @@ class MeshPredictor(object):
 #--------------------------如果得到的角度大於90度喔i cancle this thing
             # if(math.degrees(angle)>=90):
             line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
-#            else:
-#                line = str(3) + " " + str(face_point2) + " " + str(face_point1) + " " + str(face_point3) + "\n"
 #-------------------------------------------
-            if(i==86-1):
-                print(str(face_point1)+" "+str(face_point2)+" "+str(face_point3))
-                print(math.degrees(angle))
+            # if(i==86-1):
+            #     print(str(face_point1)+" "+str(face_point2)+" "+str(face_point3))
+            #     print(math.degrees(angle))
             f.write(line)
             for j in range(3):
                 if (j == 0):
