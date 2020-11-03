@@ -256,11 +256,10 @@ class MeshNet(nn.Module):
         self.symmetric_texture = opts.symmetric_texture
 
         # Mean shape.
-        verts, faces = mesh.create_sphere(opts.subdivide)
-        print(verts)
+        #verts, faces = mesh.create_sphere(opts.subdivide)
         #---------------------------------------edited by parker
         f=open("sphere_mesh_use_mesh_lab.off")
-#        verts,faces=read_off(f)
+        verts,faces=read_off(f)
         num_verts = verts.shape[0]
 
         # ------------------------------this is sphere mean shape----
@@ -355,7 +354,7 @@ class MeshNet(nn.Module):
             self.num_output = num_verts
 #---------------------------edited by parker
         # print("mesh_net verts:",verts)
-        print("mesh_net len:",len(verts))
+        # print("mesh_net len:",len(verts))
 #--------------------------------
         verts_np = verts
         faces_np = faces

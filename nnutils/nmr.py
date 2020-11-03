@@ -45,7 +45,7 @@ class NeuralRenderer(torch.nn.Module):
         # Make light only ambient.
         self.renderer.light_intensity_ambient = 1
         self.renderer.light_intensity_directional = 0
-
+#----------------------------------------------環境光為1
     def set_bgcolor(self, color):
         self.renderer.background_color = color
 

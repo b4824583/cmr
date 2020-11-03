@@ -82,7 +82,7 @@ class VisRenderer(object):
         mesh_x = np.empty(len(verts[0]))
         mesh_y = np.empty(len(verts[0]))
         mesh_z = np.empty(len(verts[0]))
-        print("bird_vis verts:",verts[0])
+#        print("bird_vis verts:",verts[0])
         for i in range(len(verts[0])):
             line=str(float(verts[0][i][0]))+" "+str(float(verts[0][i][1]))+" "+str(float(verts[0][i][2]))+"\n"
             f.write(line)
@@ -107,11 +107,11 @@ class VisRenderer(object):
                         tri_j[i]=self.faces[0][i][j]
                     else:
                         tri_k[i]=self.faces[0][i][j]
-        fig = go.Figure(
-            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightblue', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
-        fig.show()
+#        fig = go.Figure(
+#            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightblue', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
+#        fig.show()
         f.close()
-        exit()#end code
+#        exit()#end code
         # ----------------------edited by parker-----------------
 
 
