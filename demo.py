@@ -53,12 +53,14 @@ def preprocess_image(img_path, img_size=256):
 def visualize(img, outputs, renderer):
     vert = outputs['verts'][0]
     cam = outputs['cam_pred'][0]
+
     texture = outputs['texture'][0]
     # -----------------------這邊會輸出已經預測好的bird mesh
     # -----------------------------------------這邊會Vis Render call()
     shape_pred = renderer(vert, cam)
     # -----------------------這邊會輸出已經預測好的bird mesh
     # -----------------------------------------這邊會Vis Render call()
+
     img_pred = renderer(vert, cam, texture=texture)
 
     # Different viewpoints.
@@ -68,9 +70,21 @@ def visualize(img, outputs, renderer):
         vert, cam, angle=60, axis=[0, 1, 0], texture=texture, extra_elev=True)
     vp3 = renderer.diff_vp(
         vert, cam, angle=60, axis=[1, 0, 0], texture=texture)
-
+    f=open("texture.txt","w")
+    f.write(repr(texture.shape)+"\n")
+    f.write(repr(texture))
+    f.close()
+    # print(str(repr(texture.shape)))
+    # print()
     img = np.transpose(img, (1, 2, 0))
     import matplotlib.pyplot as plt
+    # plt.ion()
+    # plt.figure(1)
+    # plt.clf()
+    # plt.imshow(texture)
+    # plt.show()
+    # plt.savefig("texture.png")
+
     plt.ion()
     plt.figure(1)
     plt.clf()

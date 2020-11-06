@@ -111,7 +111,7 @@ class VisRenderer(object):
 #            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightblue', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
 #        fig.show()
         f.close()
-#        exit()#end code
+
         # ----------------------edited by parker-----------------
 
 
@@ -423,6 +423,11 @@ def visflow(flow_img):
         weights = np.hstack([vals, np.array([0, 1])])
         # Drop the dummy colors
         colors = cm.plasma(weights)[:-2, :3]
+        #print(colors)
+        f=open("color.txt","w")
+        f.write(repr(colors.shape)+"\n")
+        f.write(repr(colors))
+        f.close()
         return colors
 
     # x_color = cm.plasma(x_img.reshape(-1))[:, :3]
@@ -433,9 +438,16 @@ def visflow(flow_img):
     y_color = color_within_01(y_img.reshape(-1))
     y_color = y_color.reshape([y_img.shape[0], y_img.shape[1], 3])
     vis = np.vstack([x_color, y_color])
+    #---------------original not parker 原本的程式就有的視覺化參數
     # import matplotlib.pyplot as plt
     # plt.ion()
     # plt.imshow(x_color)
+    # plt.show()
+    # plt.savefig("x_color.png")
+    # plt.imshow(y_color)
+    # plt.show()
+    # plt.savefig("y_color.png")
+    #----------------
     return vis
 
 
