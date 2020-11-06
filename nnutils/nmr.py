@@ -57,7 +57,9 @@ class NeuralRenderer(torch.nn.Module):
         verts = self.proj_fn(vertices, cams, offset_z=self.offset_z)
         vs = verts.clone()
         vs[:, :, 1] *= -1
+        print("vs:"+repr(vs.shape))
         fs = faces.clone()
+        print("fs:"+repr(fs.shape))
         if textures is None:
             self.mask_only = True
             masks = self.renderer.render_silhouettes(vs,fs)
@@ -65,6 +67,7 @@ class NeuralRenderer(torch.nn.Module):
         else:
             self.mask_only = False
             ts = textures.clone()
+            print("ts:"+repr(ts.shape))
             imgs = self.renderer.render(vs, fs, ts)[0] #only keep rgb, no alpha and depth
             return imgs
         

@@ -49,7 +49,7 @@ class MeshPredictor(object):
 
         self.renderer = NeuralRenderer(opts.img_size)
 
-        if opts.texture:
+        if opts.texture:#--------------------這個只是true而已
             self.tex_renderer = NeuralRenderer(opts.img_size)
             # Only use ambient light for tex renderer
             self.tex_renderer.ambient_light_only()
@@ -164,7 +164,6 @@ class MeshPredictor(object):
 
         for i in range(len(self.faces[0])):
 
-            # -------------------------- norm 法向量 and vector with center angle
             #-------------------------
             face_point1 = int(self.faces[0][i][0])
             face_point2 = int(self.faces[0][i][1])
@@ -212,49 +211,24 @@ class MeshPredictor(object):
             if self.textures.size(-1) == 2:
                 # Flow texture!
                 self.texture_flow = self.textures
-
+#-----------------------
                 txt_file = open("texture_flow.txt", "w")
-                for i in range(len(self.textures[0])):
-                    for j in range(len(self.textures[0][i])):
-                        for k in  range(len(self.textures[0][i][j])):
-                            txt_file.write(str(float(self.textures[0][i][j][k][0]))+" "+str(float(self.textures[0][i][j][k][1])))
-                            txt_file.write("\n")
-                        txt_file.write("\n")
-                    txt_file.write("\n")
+                txt_file.write(repr(self.textures.shape))
+                txt_file.write(repr(self.textures))
                 txt_file.close()
-                print("textures:[0]\t"+str(len(self.textures[0])))
-                print("textures:[0][i]\t"+str(len(self.textures[0][0])))
-                print("textures:[0][i][j]\t"+str(len(self.textures[0][0][0])))
-                print("textures:[0][i][j][k]\t" + str(len(self.textures[0][0][0][0])))
-
+#-----------------------
                 self.textures = geom_utils.sample_textures(self.textures,
                                                            self.imgs)
+#-----------------------edited by parker
                 txt_file=open("texture_sample_textures.txt","w")
-                print("textures:[0]\t"+str(len(self.textures[0])))
-                print("textures:[0][i]\t"+str(len(self.textures[0][0])))
-                print("textures:[0][i][j]\t"+str(len(self.textures[0][0][0])))
-                print("textures:[0][i][j][k]\t" + str(len(self.textures[0][0][0][0])))
-
-                for i in range(len(self.textures[0])):
-                    for j in range(len(self.textures[0][i])):
-                        for k in range(len(self.textures[0][i][j])):
-                            txt_file.write(
-                                str(float(self.textures[0][i][j][k][0])) + " " + str(float(self.textures[0][i][j][k][1]))+" "+str(float(self.textures[0][i][j][k][2])))
-                            #                            txt_file.write("213")
-                            txt_file.write("\n")
-                        txt_file.write("\n")
-                    txt_file.write("\n")
+                txt_file.write(repr(self.textures.shape))
+                txt_file.write(repr(self.textures))
                 txt_file.close()
 
-                # f=open("texture_sample_textures.txt","w")
-                # for i in range(len(self.textrures)):
-                #     f.write(self.textures[i])
-                # f.close()
-            print("dim:"+str(self.textures.dim()))
             if self.textures.dim() == 5:  # B x F x T x T x 3
                 tex_size = self.textures.size(2)
                 self.textures = self.textures.unsqueeze(4).repeat(1, 1, 1, 1,
-                                                                  tex_size, 1)
+                                                                  tex_size, 1)#這一行部知道在幹麻
 
             # Render texture:
             self.texture_pred = self.tex_renderer.forward(
@@ -266,6 +240,27 @@ class MeshPredictor(object):
             self.uv_flows = uv_flows.permute(0, 2, 3, 1)
             self.uv_images = torch.nn.functional.grid_sample(self.imgs,
                                 self.uv_flows, align_corners=True)
+            uv_flows=open("uv_flows.txt","w")
+            uv_flows.write(repr(self.uv_flows.shape))
+            uv_flows.write(repr(self.uv_flows))
+            uv_flows.close()
+            uv_images=open("uv_images.txt","w")
+            uv_images.write(repr(self.uv_images[0].shape))
+#            uv_images_png=np.reshape(self.uv_images[0],(128,256,3))
+#            uv_images.write(repr(uv_images_png))
+            uv_images.close()
+            uv_image_array = np.zeros([128, 256, 3])
+
+            for i in range(len(self.uv_images[0])):
+                for j in range(len(self.uv_images[0][i])):
+                    for k in range(len(self.uv_images[0][i][j])):
+                        uv_image_array[j][k][i]=self.uv_images[0][i][j][k]
+            import matplotlib.pyplot as plt
+            plt.imshow(uv_image_array)
+            plt.draw()
+            plt.show()
+            plt.savefig('uv_image_test.png')
+
         else:
             self.textures = None
 
