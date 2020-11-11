@@ -117,16 +117,17 @@ class TexturePredictorUV(nn.Module):
 
     def forward(self, feat):
         # pdb.set_trace()
-        uvimage_pred = self.enc.forward(feat)
+        uvimage_pred = self.enc.forward(feat)#net_bloks.fc_stack().forward
         uvimage_pred = uvimage_pred.view(uvimage_pred.size(0), self.nc_init, self.feat_H, self.feat_W)
         # B x 2 or 3 x H x W
-        self.uvimage_pred = self.decoder.forward(uvimage_pred)
+        self.uvimage_pred = self.decoder.forward(uvimage_pred) #nb.decoder2d.forward 不確定是不是會跑到container的forward
         self.uvimage_pred = torch.tanh(self.uvimage_pred)
 
         tex_pred = torch.nn.functional.grid_sample(self.uvimage_pred, self.uv_sampler, align_corners=True)
         tex_pred = tex_pred.view(uvimage_pred.size(0), -1, self.F, self.T, self.T).permute(0, 2, 3, 4, 1)
 
         if self.symmetric:
+            #會走這一段，因為是對稱是true，回傳後會得到1 1280 6 6 2
             # Symmetrize.
             tex_left = tex_pred[:, -self.num_sym_faces:]
             return torch.cat([tex_pred, tex_left], 1)
@@ -221,7 +222,7 @@ class CodePredictor(nn.Module):
 #------------ Mesh Net ------------#
 #----------------------------------#
 
-#----------------------- read off_file
+#----------------------- read off_file edited by parker
 def read_off(file):
     if 'OFF' != file.readline().strip():
         raise('Not a valid OFF header')
@@ -249,6 +250,9 @@ def read_off(file):
 class MeshNet(nn.Module):
     def __init__(self, input_shape, opts, nz_feat=100, num_kps=15, sfm_mean_shape=None):
         # Input shape is H x W of the image.
+        #input shape is Turple (256,256)
+        #這邊呼叫了mesh net的父類別，module.py 的Module.init()
+        #在module創見模型，使用
         super(MeshNet, self).__init__()
         self.opts = opts
         self.pred_texture = opts.texture
@@ -258,6 +262,8 @@ class MeshNet(nn.Module):
         # Mean shape.
         #verts, faces = mesh.create_sphere(opts.subdivide)
         #---------------------------------------edited by parker
+        #------------------------------------這邊是使用我們以建立的sphere mesh，不過可能實際上沒什麼用。
+
         f=open("sphere_mesh_use_mesh_lab.off")
         verts,faces=read_off(f)
         num_verts = verts.shape[0]
@@ -288,23 +294,6 @@ class MeshNet(nn.Module):
             face_point1=int(faces[i][0])
             face_point2=int(faces[i][1])
             face_point3=int(faces[i][2])
-            # x0, y0, z0 = float(verts[face_point1][0]), float(verts[face_point1][1]), float(
-            #     verts[face_point1][2])
-            # x1, y1, z1 = float(verts[face_point2][0]), float(verts[face_point2][1]), float(
-            #     verts[face_point2][2])
-            # x2, y2, z2 = float(verts[face_point3][0]), float(verts[face_point3][1]), float(
-            #     verts[face_point3][2])
-            # ux, uy, uz = u = [x1 - x0, y1 - y0, z1 - z0]
-            # vx, vy, vz = v = [x2 - x0, y2 - y0, z2 - z0]
-            # u_cross_v = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx]
-            # #            print(u_cross_v)#求得法向量
-            # center__of_gravity = [(x0 + x1 + x2) / 3, (y0 + y1 + y2) / 3, (z0 + z1 + z2) / 3]
-            # center_of_gravity_zero_vector = [0 - center__of_gravity[0], 0 - center__of_gravity[1],
-            #                                  0 - center__of_gravity[2]]
-            #
-            # unit_vector_1 = u_cross_v / np.linalg.norm(u_cross_v)
-            # unit_vector_2 = center_of_gravity_zero_vector / np.linalg.norm(center_of_gravity_zero_vector)
-            # dot_product = np.dot(unit_vector_1, unit_vector_2)
 
             line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
 
@@ -319,9 +308,9 @@ class MeshNet(nn.Module):
                 else:
                     tri_k[i] = faces[i][j]
         import plotly.graph_objects as go
-        fig = go.Figure(
-            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
-        fig.show()
+#        fig = go.Figure(
+#            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
+#        fig.show()
         f.close()
         #--------------it is sphere mesh
         # ----------------------edited by parker-----------------
@@ -331,6 +320,7 @@ class MeshNet(nn.Module):
             if sfm_mean_shape is not None:
                 verts = geom_utils.project_verts_on_mesh(verts, sfm_mean_shape[0], sfm_mean_shape[1])
 
+            #輸出number symmertic outpu是number symmetric以及 number  independent
             num_sym_output = num_indept + num_sym
             if opts.only_mean_sym:
                 print('Only the mean shape is symmetric!')
@@ -342,9 +332,11 @@ class MeshNet(nn.Module):
             self.num_indept_faces = num_indept_faces
             self.num_sym_faces = num_sym_faces
             # mean shape is only half.
+            #--------------------這邊很特別，因為以下是要輸出的vertex數量，它只輸出了一半的數量，目的是為了讓它可以對稱
+            #shape is 337x3 是32個indenpent+305 symmetric vertices
             self.mean_v = nn.Parameter(torch.Tensor(verts[:num_sym_output]))
-
             # Needed for symmetrizing..
+            #這邊做出一個[-1.,1.,1.],device="cuda:0"的矩陣
             self.flip = Variable(torch.ones(1, 3).cuda(), requires_grad=False)
             self.flip[0, 0] = -1
         else:
@@ -388,10 +380,10 @@ class MeshNet(nn.Module):
             nb.net_init(self.texture_predictor)
 
     def forward(self, img):
-        img_feat = self.encoder.forward(img)
-        codes_pred = self.code_predictor.forward(img_feat)
+        img_feat = self.encoder.forward(img)# image_feat是1 200的shape
+        codes_pred = self.code_predictor.forward(img_feat)#code preds don't know what's that
         if self.pred_texture:
-            texture_pred = self.texture_predictor.forward(img_feat)
+            texture_pred = self.texture_predictor.forward(img_feat) #TexturePredictorUV.forward(image_feat)
             return codes_pred, texture_pred
         else:
             return codes_pred

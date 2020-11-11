@@ -35,10 +35,14 @@ class MeshPredictor(object):
         self.opts = opts
 
         self.symmetric = opts.symmetric
-
+        #img_size是(256,256)
         img_size = (opts.img_size, opts.img_size)
         print('Setting up model..')
         #-----------------目前猜測是在這一行的什後從mean mesh變成learned mesh的
+#        print(opts.nz_feat)
+#        exit()
+        #nz_feat目前不確定是哪冒出來的，還要找源頭
+        #nz_feat 為200
         self.model = mesh_net.MeshNet(img_size, opts, nz_feat=opts.nz_feat)
         #-----------------------------------經這一個之後就被改變了得到一個337的verts,但原本的verts至少有600個所以它可能是將某些點更動了,
         # 也可能是它會透過對稱的手法來變成完整的mean shape
@@ -119,7 +123,7 @@ class MeshPredictor(object):
 
     def forward(self):
         if self.opts.texture:
-            pred_codes, self.textures = self.model.forward(self.input_imgs)
+            pred_codes, self.textures = self.model.forward(self.input_imgs)#這邊得到的textures就是1 1280 6 6 2
         else:
             pred_codes = self.model.forward(self.input_imgs)
 
@@ -179,9 +183,10 @@ class MeshPredictor(object):
                     tri_j[i] = self.faces[0][i][j]
                 else:
                     tri_k[i] = self.faces[0][i][j]
-        fig = go.Figure(
-            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightgreen', opacity=0.5,i=tri_i, j=tri_j, k=tri_k)])
-        fig.show()
+#--------------我暫時不需要顯示這些東西
+#        fig = go.Figure(
+#            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightgreen', opacity=0.5,i=tri_i, j=tri_j, k=tri_k)])
+#        fig.show()
         f.close()
 #---------------------------------------------------------
 #        exit()
