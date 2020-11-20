@@ -56,7 +56,7 @@ class VisRenderer(object):
         cams is 7, cuda torch Variable
         Returns N x N x 3 numpy
         """
-        print("visrender call")
+        #print("visrender call")
         if texture is None:
             texture = self.default_tex
         elif texture.dim() == 5:

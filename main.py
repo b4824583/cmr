@@ -63,21 +63,28 @@ class ShapeTrainer(train_utils.Trainer):
         # ----------
         # Options
         # ----------
+        #是否對稱
         self.symmetric = opts.symmetric
+        #--------------parker 不確定這是幹麻的
+        #--------------anno_sfm_path會得到一個路徑
         anno_sfm_path = osp.join(opts.cub_cache_dir, 'sfm', 'anno_train.mat')
+        #----anno_train.mat是只有15個點的最基礎的鳥模型
         anno_sfm = sio.loadmat(anno_sfm_path, struct_as_record=False, squeeze_me=True)
+        #----------將anno_sfm["S"]是15個點的vertex，anno_sfm["conv_tri"]是15個點組成的面
         sfm_mean_shape = (np.transpose(anno_sfm['S']), anno_sfm['conv_tri']-1)
-
+        #--------------
         img_size = (opts.img_size, opts.img_size)
+        #這邊會進去mesh_net.py的MeshNet
         self.model = mesh_net.MeshNet(
             img_size, opts, nz_feat=opts.nz_feat, num_kps=opts.num_kps, sfm_mean_shape=sfm_mean_shape)
-
+        #-----如果有已經訓練過得epochs則執行這一行
         if opts.num_pretrain_epochs > 0:
             self.load_network(self.model, 'pred', opts.num_pretrain_epochs)
 
         self.model = self.model.cuda(device=opts.gpu_id)
 
         # Data structures to use for triangle priors.
+        #---------這邊是拿取modle已經計算好的eges2verts
         edges2verts = self.model.edges2verts
         # B x E x 4
         edges2verts = np.tile(np.expand_dims(edges2verts, 0), (opts.batch_size, 1, 1))
@@ -85,9 +92,11 @@ class ShapeTrainer(train_utils.Trainer):
         # For renderering.
         faces = self.model.faces.view(1, -1, 3)
         self.faces = faces.repeat(opts.batch_size, 1, 1)
+        #include nmr並且取名叫做Neural Renderer
         self.renderer = NeuralRenderer(opts.img_size)
         self.renderer_predcam = NeuralRenderer(opts.img_size) #for camera loss via projection
 
+        #如果要計算texture的話，會執行下面這一行，但我反而不懂，為什麼要執行這一行
         # Need separate NMR for each fwd/bwd call.
         if opts.texture:
             self.tex_renderer = NeuralRenderer(opts.img_size)
@@ -313,10 +322,15 @@ class ShapeTrainer(train_utils.Trainer):
 
 
 def main(_):
+    #----------設定隨機化的種子，隨機初始化，如果不設定的話，每一次初始化都是隨機。
     torch.manual_seed(0)
+    #-----這邊會進入train_utils.py的__init__
     trainer = ShapeTrainer(opts)
     trainer.init_training()
     trainer.train()
 
 if __name__ == '__main__':
     app.run(main)
+    opts.name="bird_net_test"
+    opts.display_port=8097
+

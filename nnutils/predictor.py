@@ -47,6 +47,7 @@ class MeshPredictor(object):
         #-----------------------------------經這一個之後就被改變了得到一個337的verts,但原本的verts至少有600個所以它可能是將某些點更動了,
         # 也可能是它會透過對稱的手法來變成完整的mean shape
         self.load_network(self.model, 'pred', self.opts.num_train_epoch)
+        #model 從training()模式轉換成評估模式
         self.model.eval()
 
         self.model = self.model.cuda(device=self.opts.gpu_id)
@@ -217,18 +218,18 @@ class MeshPredictor(object):
                 # Flow texture!
                 self.texture_flow = self.textures
 #-----------------------
-                txt_file = open("texture_flow.txt", "w")
-                txt_file.write(repr(self.textures.shape))
-                txt_file.write(repr(self.textures))
-                txt_file.close()
+                # txt_file = open("texture_flow.txt", "w")
+                # txt_file.write(repr(self.textures.shape))
+                # txt_file.write(repr(self.textures))
+                # txt_file.close()
 #-----------------------
                 self.textures = geom_utils.sample_textures(self.textures,
                                                            self.imgs)
 #-----------------------edited by parker
-                txt_file=open("texture_sample_textures.txt","w")
-                txt_file.write(repr(self.textures.shape))
-                txt_file.write(repr(self.textures))
-                txt_file.close()
+                # txt_file=open("texture_sample_textures.txt","w")
+                # txt_file.write(repr(self.textures.shape))
+                # txt_file.write(repr(self.textures))
+                # txt_file.close()
 
             if self.textures.dim() == 5:  # B x F x T x T x 3
                 tex_size = self.textures.size(2)
@@ -245,15 +246,18 @@ class MeshPredictor(object):
             self.uv_flows = uv_flows.permute(0, 2, 3, 1)
             self.uv_images = torch.nn.functional.grid_sample(self.imgs,
                                 self.uv_flows, align_corners=True)
-            uv_flows=open("uv_flows.txt","w")
-            uv_flows.write(repr(self.uv_flows.shape))
-            uv_flows.write(repr(self.uv_flows))
-            uv_flows.close()
-            uv_images=open("uv_images.txt","w")
-            uv_images.write(repr(self.uv_images[0].shape))
-#            uv_images_png=np.reshape(self.uv_images[0],(128,256,3))
-#            uv_images.write(repr(uv_images_png))
-            uv_images.close()
+            #edited_by parker
+            # uv_flows=open("uv_flows.txt","w")
+            # uv_flows.write(repr(self.uv_flows.shape))
+            # uv_flows.write(repr(self.uv_flows))
+            # uv_flows.close()
+            # uv_images=open("uv_images.txt","w")
+            # uv_images.write(repr(self.uv_images[0].shape))
+            # uv_images_png=np.reshape(self.uv_images[0],(128,256,3))
+            # uv_images.write(repr(uv_images_png))
+            # uv_images.close()
+            #---------------------
+            #----------------------------------show uv image------ parker
             uv_image_array = np.zeros([128, 256, 3])
 
             for i in range(len(self.uv_images[0])):
@@ -265,7 +269,7 @@ class MeshPredictor(object):
             plt.draw()
             plt.show()
             plt.savefig('uv_image_test.png')
-
+            #----------------------------------
         else:
             self.textures = None
 

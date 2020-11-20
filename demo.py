@@ -132,8 +132,8 @@ def visualize(img, outputs, renderer):
 
 def main(_):
 #----edited by parker  call to graph
-    graphviz = GraphvizOutput()
-    graphviz.output_file = 'call_to_graph.png'
+    # graphviz = GraphvizOutput()
+    # graphviz.output_file = 'call_to_graph.png'
 
 
     img = preprocess_image(opts.img_path, img_size=opts.img_size)
@@ -141,8 +141,9 @@ def main(_):
 
 
 #    with PyCallGraph(output=graphviz):
+#img的維度是3x257x257
 # 創建一個pytorch tensor 的batch 維度是["img"][1][3][257][257]而且值為 1.0
-    print(img.shape)
+
     batch = {'img': torch.Tensor(np.expand_dims(img, 0))}
     predictor = pred_util.MeshPredictor(opts)
     #-----------------得到預測好的vertice
@@ -162,5 +163,5 @@ if __name__ == '__main__':
     opts.batch_size = 1
     opts.name="bird_net"
     opts.num_train_epoch=500
-    opts.img_path="misc/demo_data/img1.jpg"
+    opts.img_path="misc/demo_data/img2.jpg"
     app.run(main)

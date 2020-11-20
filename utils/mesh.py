@@ -158,6 +158,7 @@ def compute_edges2verts(verts, faces):
     """
     Returns a list: [A, B, C, D] the 4 vertices for each edge.
     """
+    #這邊會得到三個邊，
     edge_dict = {}
     for face_id, (face) in enumerate(faces):
         for e1, e2, o_id in [(0, 1, 2), (0, 2, 1), (1, 2, 0)]:
@@ -168,6 +169,18 @@ def compute_edges2verts(verts, faces):
             else:
                 if other_v not in edge_dict[edge]:
                     edge_dict[edge].append(other_v)
+    #edge:544,561
+    #edge_dic:1920
+    #result:1920x4
+    #hstack依照水平方向將element疊起來
+    ''' a = np.array([[1],[2],[3]])
+        b = np.array([[2],[3],[4]])
+        np.hstack((a,b))
+        array([[1, 2],
+            [2, 3],
+            [3, 4]])
+        '''
+    #results這邊得到的會是一條邊，並且得到另外兩個點，兩個相連的三角形必有共用的邊，而且有兩個額外的點
     result = np.stack([np.hstack((edge, other_vs)) for edge, other_vs in edge_dict.items()])
     return result
 
@@ -190,10 +203,11 @@ def compute_vert2kp(verts, mean_shape):
 
 def get_spherical_coords(X):
     # X is N x 3
+    #這邊是求範數norm 2 陣列內二次方相加開根號
     rad = np.linalg.norm(X, axis=1)
-    # Inclination
+    # Inclination   極角
     theta = np.arccos(X[:, 2] / rad)
-    # Azimuth
+    # Azimuth       方位角
     phi = np.arctan2(X[:, 1], X[:, 0])
 
     # Normalize both to be between [-1, 1]
@@ -209,26 +223,42 @@ def compute_uvsampler(verts, faces, tex_size=2):
     F x T x T points.
     Returns F x T x T x 2
     """
+    #--------------"""
+    """
+    呼叫一個np.arange(tex_size)[0,1,2,3,4,5.....,tex_size-1]在除以(tex_size-1) tex_size是6
+    [0,0.2,0.4,0.6,0.8,1]
+    """
     alpha = np.arange(tex_size, dtype=np.float) / (tex_size-1)
     beta = np.arange(tex_size, dtype=np.float) / (tex_size-1)
     import itertools
     # Barycentric coordinate values
+    #[0,0] [0,0.2] [0,0.4] [0,0.6] [0,0.8] [0,1] [0.2,0] [0.2,0.2]....[1,1]
     coords = np.stack([p for p in itertools.product(*[alpha, beta])])
+    #這邊會將verts與faces組合起來，變成每一個faces的vertex裡面會有座標值
     vs = verts[faces]
     # Compute alpha, beta (this is the same order as NMR)
-    v2 = vs[:, 2]
-    v0v2 = vs[:, 0] - vs[:, 2]
-    v1v2 = vs[:, 1] - vs[:, 2]    
+    v2 = vs[:, 2]#表示所有row為2的值，656x3
+    #這兩個應該是向量v2v0向量，以及v2v1向量
+    v0v2 = vs[:, 0] - vs[:, 2]#表示所有row為0的值，表示所有row為2的值，656x3
+    v1v2 = vs[:, 1] - vs[:, 2]#656x3
     # F x 3 x T*2
-    samples = np.dstack([v0v2, v1v2]).dot(coords.T) + v2.reshape(-1, 3, 1)    
-    # F x T*2 x 3 points on the sphere 
-    samples = np.transpose(samples, (0, 2, 1))
+    #但我不知道它這樣子做的目的是什麼
+    # 這一串最後的輸出是656x3x36
+    #大概知道這是什麼了，我們把這個向量切成5個片段，並且在加上原本的v2
+    samples = np.dstack([v0v2, v1v2]).dot(coords.T) + v2.reshape(-1, 3, 1)
+    # samples=np.dstack([v0v2,v1v2])#656x3x2 將兩個陣列諜在一起
+    # samples=samples.dot(coords.T)#(656x3x2 dot 2x36)= 656x3x36
+    # samples=samples+v2.reshape(-1,3,1)#-1  就是將v2 array攤平，接著將它做成3x1的array，並把它與samples相加
+    # F x T*2 x 3 points on the sphere
+    #這一串是將兩列交換656x36x3
+    samples = np.transpose(samples, (0, 2, 1))#656x36x3
 
     # Now convert these to uv.
-    uv = get_spherical_coords(samples.reshape(-1, 3))
+    uv = get_spherical_coords(samples.reshape(-1, 3))#23616x2
     # uv = uv.reshape(-1, len(coords), 2)
-
-    uv = uv.reshape(-1, tex_size, tex_size, 2)
+    #tex_size=6 why為什麼要是6?
+    #經過reshape -1 會變成47232的陣列
+    uv = uv.reshape(-1, tex_size, tex_size, 2)#最後在reshape成656x6x6x2
     return uv
 
 

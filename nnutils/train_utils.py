@@ -125,6 +125,11 @@ class Trainer():
 
     def init_training(self):
         opts = self.opts
+        '''
+        這邊是會呼叫main.py的init_dataset()，以及define_model()，define_criterion()
+        幹誰會這樣串阿 操
+        還是覺得很莫名
+        '''
         self.init_dataset()    
         self.define_model()
         self.define_criterion()

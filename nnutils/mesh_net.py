@@ -67,7 +67,7 @@ class Encoder(nn.Module):
     """
     Current:
     Resnet with 4 blocks (x32 spatial dim reduction)
-    Another conv with stride 2 (x64)
+    Another conv with sride 2 (x64)
     This is sent to 2 fc layers with final output nz_feat.
     """
 
@@ -106,6 +106,7 @@ class TexturePredictorUV(nn.Module):
         self.T = uv_sampler.size(2)
         self.predict_flow = predict_flow
         # B x F x T x T x 2 --> B x F x T*T x 2
+        #pytorch.view相當於numpy的resize
         self.uv_sampler = uv_sampler.view(-1, self.F, self.T*self.T, 2)
 
         self.enc = nb.fc_stack(nz_feat, self.nc_init*self.feat_H*self.feat_W, 2)
@@ -223,7 +224,7 @@ class CodePredictor(nn.Module):
 #----------------------------------#
 
 #----------------------- read off_file edited by parker
-def read_off(file):
+def read_off_file(file):
     if 'OFF' != file.readline().strip():
         raise('Not a valid OFF header')
     n_verts, n_faces, n_dontknow = tuple([int(s) for s in file.readline().strip().split(' ')])
@@ -251,8 +252,8 @@ class MeshNet(nn.Module):
     def __init__(self, input_shape, opts, nz_feat=100, num_kps=15, sfm_mean_shape=None):
         # Input shape is H x W of the image.
         #input shape is Turple (256,256)
-        #這邊呼叫了mesh net的父類別，module.py 的Module.init()
-        #在module創見模型，使用
+        #它繼承了module.py
+        #這邊使用了超類別，竟而使用module.py的__init__而不是只用了MeshNet
         super(MeshNet, self).__init__()
         self.opts = opts
         self.pred_texture = opts.texture
@@ -265,67 +266,70 @@ class MeshNet(nn.Module):
         #------------------------------------這邊是使用我們以建立的sphere mesh，不過可能實際上沒什麼用。
 
         f=open("sphere_mesh_use_mesh_lab.off")
-        verts,faces=read_off(f)
+        verts,faces=read_off_file(f)
         num_verts = verts.shape[0]
 
         # ------------------------------this is sphere mean shape----
-        f=open("sphere_mesh.off","w")
-        f.write("OFF\n")
-        line=str(len(verts))+" "+str(len(faces))+" 0\n"
-        f.write(line)
-        mesh_x = np.empty(len(verts))
-        mesh_y = np.empty(len(verts))
-        mesh_z = np.empty(len(verts))
-        for i in range(len(verts)):
-            line=str(verts[i][0])+" "+str(verts[i][1])+" "+str(verts[i][2])+"\n"
-            f.write(line)
-            for j in range(3):
-                if (j == 0):
-                    mesh_x[i] = verts[i][j]
-                elif (j == 1):
-                    mesh_y[i] = verts[i][j]
-                else:
-                    mesh_z[i] = verts[i][j]
-        tri_i = np.empty(len(faces))
-        tri_j = np.empty(len(faces))
-        tri_k = np.empty(len(faces))
-
-        for i in range(len(faces)):
-            face_point1=int(faces[i][0])
-            face_point2=int(faces[i][1])
-            face_point3=int(faces[i][2])
-
-            line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
-
-
-            # -------------------------------------------
-            f.write(line)
-            for j in range(3):
-                if (j == 0):
-                    tri_i[i] = faces[i][j]
-                elif (j == 1):
-                    tri_j[i] = faces[i][j]
-                else:
-                    tri_k[i] = faces[i][j]
+        # f=open("sphere_mesh.off","w")
+        # f.write("OFF\n")
+        # line=str(len(verts))+" "+str(len(faces))+" 0\n"
+        # f.write(line)
+        # mesh_x = np.empty(len(verts))
+        # mesh_y = np.empty(len(verts))
+        # mesh_z = np.empty(len(verts))
+        # for i in range(len(verts)):
+        #     line=str(verts[i][0])+" "+str(verts[i][1])+" "+str(verts[i][2])+"\n"
+        #     f.write(line)
+        #     for j in range(3):
+        #         if (j == 0):
+        #             mesh_x[i] = verts[i][j]
+        #         elif (j == 1):
+        #             mesh_y[i] = verts[i][j]
+        #         else:
+        #             mesh_z[i] = verts[i][j]
+        # tri_i = np.empty(len(faces))
+        # tri_j = np.empty(len(faces))
+        # tri_k = np.empty(len(faces))
+        #
+        # for i in range(len(faces)):
+        #     face_point1=int(faces[i][0])
+        #     face_point2=int(faces[i][1])
+        #     face_point3=int(faces[i][2])
+        #
+        #     line = str(3) + " " + str(face_point1) + " " + str(face_point2) + " " + str(face_point3) + "\n"
+        #
+        #
+        #     # -------------------------------------------
+        #     f.write(line)
+        #     for j in range(3):
+        #         if (j == 0):
+        #             tri_i[i] = faces[i][j]
+        #         elif (j == 1):
+        #             tri_j[i] = faces[i][j]
+        #         else:
+        #             tri_k[i] = faces[i][j]
         import plotly.graph_objects as go
 #        fig = go.Figure(
 #            data=[go.Mesh3d(x=mesh_x, y=mesh_y, z=mesh_z, color='lightpink', opacity=0.5, i=tri_i, j=tri_j, k=tri_k)])
 #        fig.show()
-        f.close()
+#         f.close()
+
         #--------------it is sphere mesh
         # ----------------------edited by parker-----------------
 
         if self.symmetric:
+            #這邊會抓取mesh 並且給予它各個數值
             verts, faces, num_indept, num_sym, num_indept_faces, num_sym_faces = mesh.make_symmetric(verts, faces)
-            if sfm_mean_shape is not None:
+            if sfm_mean_shape is not None:#這邊會進去，但我不確定project verts_on_mesh的用途，我也不確定它是否有調換順序，如果有救慘了
                 verts = geom_utils.project_verts_on_mesh(verts, sfm_mean_shape[0], sfm_mean_shape[1])
 
-            #輸出number symmertic outpu是number symmetric以及 number  independent
+            #輸出number symmertic output是number symmetric以及 number independent的總和
             num_sym_output = num_indept + num_sym
             if opts.only_mean_sym:
                 print('Only the mean shape is symmetric!')
                 self.num_output = num_verts
             else:
+                # 會執行這一段
                 self.num_output = num_sym_output
             self.num_sym = num_sym
             self.num_indept = num_indept
@@ -340,7 +344,8 @@ class MeshNet(nn.Module):
             self.flip = Variable(torch.ones(1, 3).cuda(), requires_grad=False)
             self.flip[0, 0] = -1
         else:
-            if sfm_mean_shape is not None:
+            #因為sfm_mean_shape並不是空的，所以會執行這一行，但問題是通常symmetric會是true所以不會執行到這邊
+            if sfm_mean_shape is not None:#這一行根本不會執行到
                 verts = geom_utils.project_verts_on_mesh(verts, sfm_mean_shape[0], sfm_mean_shape[1])            
             self.mean_v = nn.Parameter(torch.Tensor(verts))
             self.num_output = num_verts
@@ -350,38 +355,56 @@ class MeshNet(nn.Module):
 #--------------------------------
         verts_np = verts
         faces_np = faces
+        #這邊會得到個tensor，但它會富有requires_grad=false的參數
         self.faces = Variable(torch.LongTensor(faces).cuda(), requires_grad=False)
+        #目前不確定這是幹麻的，而且根本沒有參數使用到它
+        #一開始不知道是幹麻的，但現在有發現main function有提取它
         self.edges2verts = mesh.compute_edges2verts(verts, faces)
-
+        #num_kps=15是有15個keypoint的意思
+        #創造一個tensor (num_kps,numverts)並且全部都是1，這邊是對於分配矩陣初始化
         vert2kp_init = torch.Tensor(np.ones((num_kps, num_verts)) / float(num_verts))
         # Remember initial vert2kp (after softmax)
+        #初始化vert2kp 這個看起來是關鍵點的二維的分配矩陣
         self.vert2kp_init = torch.nn.functional.softmax(Variable(vert2kp_init.cuda(), requires_grad=False), dim=1)
+        #parameter加諸上去後會讓requires_grad=true
         self.vert2kp = nn.Parameter(vert2kp_init)
 
-
+        #---------------------Encoder也是一個deep nueral network網絡
         self.encoder = Encoder(input_shape, n_blocks=4, nz_feat=nz_feat)
+        #---------------------CodePredictor也是一個深層網絡，但我不確定他是怎麼用的
         self.code_predictor = CodePredictor(nz_feat=nz_feat, num_verts=self.num_output)
-
         if self.pred_texture:
-            if self.symmetric_texture:
+            if self.symmetric_texture:#會進入這一行
+                #如果是對稱的貼圖，則faces數量是獨立的face加上對稱的faces
                 num_faces = self.num_indept_faces + self.num_sym_faces
             else:
                 num_faces = faces.shape[0]
-
-            uv_sampler = mesh.compute_uvsampler(verts_np, faces_np[:num_faces], tex_size=opts.tex_size)
+            #----------------------------------------------這一大段不太理解
+            #faces_np取出num_faces的數量 從1280的faces_np中取出656個face verts_np是642x3
+            #對稱的面是624，獨立的面則是32，所以我們要預測的是656的面 656x6x6x2
+            uv_sampler = mesh.compute_uvsampler(verts_np, faces_np[:num_faces], tex_size=opts.tex_size)#656x6x6x2[u,v]
             # F' x T x T x 2
             uv_sampler = Variable(torch.FloatTensor(uv_sampler).cuda(), requires_grad=False)
             # B x F' x T x T x 2
-            uv_sampler = uv_sampler.unsqueeze(0).repeat(self.opts.batch_size, 1, 1, 1, 1)
+            #unsqueeze會加一層陣列，如果是0的話所有值維持不便，單純在外面加一層
+            #但repeat就有點迷了，每一個都重複一次？
+            uv_sampler = uv_sampler.unsqueeze(0).repeat(self.opts.batch_size, 1, 1, 1, 1)#1x656x6x6x2
+            #opts.tex_size=6,num_faces=656
+            #656開根號*6並且取log2 最後取2的次方 floor是向下取整數
+            #我其實看不懂它這個操作是要幹麻......
             img_H = int(2**np.floor(np.log2(np.sqrt(num_faces) * opts.tex_size)))
             img_W = 2 * img_H
+            #img_H=128,img_W=256,nz_feat=,num_sym_faces=
             self.texture_predictor = TexturePredictorUV(
               nz_feat, uv_sampler, opts, img_H=img_H, img_W=img_W, predict_flow=True, symmetric=opts.symmetric_texture, num_sym_faces=self.num_sym_faces)
             nb.net_init(self.texture_predictor)
-
+            #---------------------------------------這一大段不太理解
     def forward(self, img):
-        img_feat = self.encoder.forward(img)# image_feat是1 200的shape
+        img_feat = self.encoder.forward(img)# image_feat是1x200的shape
+        #依據名稱應該是位置的預測
         codes_pred = self.code_predictor.forward(img_feat)#code preds don't know what's that
+
+        #如果需要預測texture，則進入這一行
         if self.pred_texture:
             texture_pred = self.texture_predictor.forward(img_feat) #TexturePredictorUV.forward(image_feat)
             return codes_pred, texture_pred
